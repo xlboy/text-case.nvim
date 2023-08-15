@@ -50,10 +50,17 @@ end
 
 local function telescope_normal_mode_quick_change(opts)
   opts = opts or require("telescope.themes").get_cursor()
-  local results = Create_resulting_cases('Convert to ', constants.change_type.CURRENT_WORD)
+  local results = Create_resulting_cases('', constants.change_type.CURRENT_WORD)
 
   require("telescope.pickers").new(opts, {
-    prompt_title = "Text Case",
+    prompt_title = "Text Case - Quick",
+    layout_strategy = "cursor",
+    layout_config = {
+      cursor = {
+        width = 40,
+        height = 16,
+      }
+    },
     finder = require("telescope.finders").new_table({
       results = results,
       entry_maker = function(entry)
@@ -76,10 +83,19 @@ end
 
 local function telescope_normal_mode_lsp_change(opts)
   opts = opts or require("telescope.themes").get_cursor()
-  local results = Create_resulting_cases('LSP rename ', constants.change_type.LSP_RENAME)
+  -- local results = Create_resulting_cases('LSP rename ', constants.change_type.LSP_RENAME)
+  local results = Create_resulting_cases('', constants.change_type.LSP_RENAME)
 
   require("telescope.pickers").new(opts, {
-    prompt_title = "Text Case",
+    -- prompt_title = "Text Case",
+    prompt_title = "Text Case - LSP Rename",
+    layout_strategy = "cursor",
+    layout_config = {
+      cursor = {
+        width = 40,
+        height = 16,
+      }
+    },
     finder = require("telescope.finders").new_table({
       results = results,
       entry_maker = function(entry)
@@ -111,14 +127,26 @@ local function telescope_normal_mode_change(opts)
     results[k] = v
     k = k + 1
   end
+  results[k] = {
+    display = '-------------------------------------------------',
+  }
+  k = k + 1
   for _, v in pairs(resultsLSPConversion) do
     results[k] = v
     k = k + 1
   end
 
 
+
   require("telescope.pickers").new(opts, {
-    prompt_title = "Text Case",
+    prompt_title = "Text Case - Normal",
+    layout_strategy = "cursor",
+    layout_config = {
+      cursor = {
+        width = 40,
+        height = 17,
+      },
+    },
     finder = require("telescope.finders").new_table({
       results = results,
       entry_maker = function(entry)
@@ -142,10 +170,17 @@ end
 local function telescope_visual_mode_change(opts)
   opts = opts or require("telescope.themes").get_cursor()
 
-  local results = Create_resulting_cases('Convert to ', constants.change_type.VISUAL)
+  local results = Create_resulting_cases('', constants.change_type.VISUAL)
 
   require("telescope.pickers").new(opts, {
-    prompt_title = "Text Case",
+    prompt_title = "Text Case - Visual",
+    layout_strategy = "cursor",
+    layout_config = {
+      cursor = {
+        width = 40,
+        height = 16,
+      }
+    },
     finder = require("telescope.finders").new_table({
       results = results,
       entry_maker = function(entry)
