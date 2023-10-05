@@ -27,24 +27,24 @@ end
 
 function M.register_keybindings(prefix, method_table, keybindings, opts)
   for _, feature in ipairs({
-    'line',
-    'eol',
-    'visual',
-    'operator',
-    'lsp_rename',
-    'current_word',
+    "line",
+    "eol",
+    "visual",
+    "operator",
+    "lsp_rename",
+    "current_word",
   }) do
     if keybindings[feature] ~= nil then
-      local mode = 'n'
-      if feature == 'visual' then
-        mode = 'v'
+      local mode = "n"
+      if feature == "visual" then
+        mode = "v"
       end
       local desc = method_table.desc
 
-      if feature == 'current_word' then
-        desc = 'Convert ' .. desc
-      elseif feature == 'lsp_rename' then
-        desc = 'LSP rename ' .. desc
+      if feature == "current_word" then
+        desc = "Convert " .. desc
+      elseif feature == "lsp_rename" then
+        desc = "LSP rename " .. desc
       end
 
       vim.keymap.set(
@@ -53,18 +53,22 @@ function M.register_keybindings(prefix, method_table, keybindings, opts)
         "<cmd>lua require('" .. constants.namespace .. "')." .. feature .. "('" .. method_table.desc .. "')<cr>",
         { desc = desc }
       )
-
     end
   end
 
-  if keybindings['quick_replace'] ~= nil then
-    local keybind = prefix .. keybindings['quick_replace']
-    local desc = 'Convert ' .. method_table.desc
-    local command = "<cmd>lua require('" ..
-        constants.namespace .. "')." .. 'quick_replace' .. "('" .. method_table.desc .. "')<cr>"
+  if keybindings["quick_replace"] ~= nil then
+    local keybind = prefix .. keybindings["quick_replace"]
+    local desc = "Convert " .. method_table.desc
+    local command = "<cmd>lua require('"
+        .. constants.namespace
+        .. "')."
+        .. "quick_replace"
+        .. "('"
+        .. method_table.desc
+        .. "')<cr>"
 
-    vim.keymap.set('n', keybind, command, { desc = desc })
-    vim.keymap.set('v', keybind, command, { desc = desc })
+    vim.keymap.set("n", keybind, command, { desc = desc })
+    vim.keymap.set("v", keybind, command, { desc = desc })
   end
 end
 
@@ -91,7 +95,7 @@ function M.register_replace_command(command, method_keys)
     vim.api.nvim_create_user_command(
       command,
       M.incremental_substitute,
-      { nargs = '?', range = '%', addr = 'lines', preview = M.incremental_substitute }
+      { nargs = "?", range = "%", addr = "lines", preview = M.incremental_substitute }
     )
   else
     vim.cmd([[
@@ -115,11 +119,11 @@ end
 
 function M.incremental_substitute(opts, preview_ns, preview_buf)
   local command = "Subs"
-  local mode = (opts.range < 2 or opts.line1 == opts.line2) and 'n' or '\22'
-  local params = vim.split(opts.args, '/')
+  local mode = (opts.range < 2 or opts.line1 == opts.line2) and "n" or "\22"
+  local params = vim.split(opts.args, "/")
   local source, dest = params[2], params[3]
   source = MixStringConectors(source)
-  dest = MixStringConectors(dest or '')
+  dest = MixStringConectors(dest or "")
   local buf = (preview_ns ~= nil) and preview_buf or vim.api.nvim_get_current_buf()
 
   local cursor_pos = vim.fn.getpos(".")
@@ -127,23 +131,16 @@ function M.incremental_substitute(opts, preview_ns, preview_buf)
 
   for _, method in ipairs(M.state.methods_by_command[command]) do
     local transformed_source = method.apply(source)
-    local transformed_dest = dest == '' and '' or method.apply(dest)
+    local transformed_dest = dest == "" and "" or method.apply(dest)
 
     local get_match = utils.get_list(utils.escape_string(transformed_source), mode)
     for match in get_match do
-      if dest ~= '' then
+      if dest ~= "" then
         conversion.replace_matches(match, transformed_source, transformed_dest, false, buf)
       end
-      local length = transformed_dest == '' and #transformed_source or #transformed_dest
+      local length = transformed_dest == "" and #transformed_source or #transformed_dest
       if preview_ns ~= nil then
-        vim.api.nvim_buf_add_highlight(
-          buf,
-          preview_ns,
-          "Search",
-          match[1] - 1,
-          match[2] - 1,
-          match[2] - 1 + length
-        )
+        vim.api.nvim_buf_add_highlight(buf, preview_ns, "Search", match[1] - 1, match[2] - 1, match[2] - 1 + length)
       end
     end
   end
@@ -156,11 +153,11 @@ function M.incremental_substitute(opts, preview_ns, preview_buf)
 end
 
 function MixStringConectors(str)
-  return str:gsub("_", '-'):gsub("-", ' '):gsub(" ", '_')
+  return str:gsub("_", "-"):gsub("-", " "):gsub(" ", "_")
 end
 
 function M.dispatcher(mode, args)
-  local params = vim.split(args, '/')
+  local params = vim.split(args, "/")
   local source, dest = params[2], params[3]
   source = MixStringConectors(source)
   dest = MixStringConectors(dest)
@@ -168,7 +165,7 @@ function M.dispatcher(mode, args)
   local cursor_pos = vim.fn.getpos(".")
   -- vim.api.nvim_feedkeys("g@", "i", false)
 
-  for _, method in ipairs(M.state.methods_by_command['Subs']) do
+  for _, method in ipairs(M.state.methods_by_command["Subs"]) do
     local transformed_source = method.apply(source)
     local transformed_dest = method.apply(dest)
 
@@ -196,11 +193,10 @@ function M.operator_callback(vmode)
     conversion.do_lsp_rename(apply)
   else
     local mode = M.state.telescope_previous_mode or vim.api.nvim_get_mode().mode
-    local region = M.state.telescope_previous_visual_region or utils.get_visual_region(
-      nil, false, nil, utils.get_mode_at_operator(vmode)
-    )
+    local region = M.state.telescope_previous_visual_region
+        or utils.get_visual_region(nil, false, nil, utils.get_mode_at_operator(vmode))
     local should_guess_region = M.state.change_type == constants.change_type.CURRENT_WORD
-        or (M.state.change_type == constants.change_type.QUICK_REPLACE and mode == 'n')
+        or (M.state.change_type == constants.change_type.QUICK_REPLACE and mode == "n")
 
     if should_guess_region then
       local jumper = method.opts and method.opts.jumper or nil
@@ -217,22 +213,10 @@ function M.operator_callback(vmode)
       end
     end
 
-    if (region.mode == constants.visual_mode.BLOCK) then
-      conversion.do_block_substitution(
-        region.start_row,
-        region.start_col,
-        region.end_row,
-        region.end_col,
-        apply
-      )
+    if region.mode == constants.visual_mode.BLOCK then
+      conversion.do_block_substitution(region.start_row, region.start_col, region.end_row, region.end_col, apply)
     else
-      conversion.do_substitution(
-        region.start_row,
-        region.start_col,
-        region.end_row,
-        region.end_col,
-        apply
-      )
+      conversion.do_substitution(region.start_row, region.start_col, region.end_row, region.end_col, apply)
     end
   end
 
@@ -300,9 +284,8 @@ function M.quick_replace(case_desc)
   M.state.change_type = constants.change_type.QUICK_REPLACE
 
   local mode = vim.api.nvim_get_mode().mode
-  if mode == 'v' or mode == '\22' or mode == 'V' then
-    M.state.telescope_previous_visual_region = utils.get_visual_region(
-      0, true, nil, utils.get_mode_at_operator(mode))
+  if mode == "v" or mode == "\22" or mode == "V" then
+    M.state.telescope_previous_visual_region = utils.get_visual_region(0, true, nil, utils.get_mode_at_operator(mode))
     M.state.change_type = constants.change_type.VISUAL
     vim.api.nvim_feedkeys("g@", "i", false)
   else
@@ -315,22 +298,27 @@ function M.open_telescope(filter)
   local mode = vim.api.nvim_get_mode().mode
   M.state.telescope_previous_mode = mode
   M.state.telescope_previous_buffer = vim.api.nvim_get_current_buf()
-  if (filter == 'quick_change') then
-
+  if filter == "quick_or_lsp" then
+    vim.lsp.buf_request(0, "textDocument/prepareRename", vim.lsp.util.make_position_params(), function(err, result)
+      local can_rename = result ~= nil
+      if can_rename then
+        vim.cmd("Telescope textcase normal_mode_lsp_change")
+      else
+        vim.cmd("Telescope textcase normal_mode_quick_change")
+      end
+    end)
+  elseif filter == "quick_change" then
     vim.cmd("Telescope textcase normal_mode_quick_change")
-
-  elseif (filter == 'lsp_change') then
-
+  elseif filter == "lsp_change" then
     vim.cmd("Telescope textcase normal_mode_lsp_change")
   else
-    if mode == 'n' then
+    if mode == "n" then
       vim.cmd("Telescope textcase normal_mode")
     else
-      M.state.telescope_previous_visual_region = utils.get_visual_region(0, true, nil, 'v')
+      M.state.telescope_previous_visual_region = utils.get_visual_region(0, true, nil, "v")
       vim.cmd("Telescope textcase visual_mode")
     end
   end
-
 end
 
 function M.start_replacing_command()
@@ -338,32 +326,26 @@ function M.start_replacing_command()
   M.state.telescope_previous_mode = mode
   M.state.telescope_previous_buffer = vim.api.nvim_get_current_buf()
 
-  if mode == 'n' then
-    local current_word = vim.fn.expand('<cword>')
-    vim.api.nvim_feedkeys(":Subs/" .. current_word .. "/", 'i', true)
+  if mode == "n" then
+    local current_word = vim.fn.expand("<cword>")
+    vim.api.nvim_feedkeys(":Subs/" .. current_word .. "/", "i", true)
   else
     local region = utils.get_visual_region(0, true)
-    local text = utils.nvim_buf_get_text(
-      0,
-      region.start_row - 1,
-      region.start_col - 1,
-      region.start_row - 1,
-      region.end_col
-    )
+    local text =
+        utils.nvim_buf_get_text(0, region.start_row - 1, region.start_col - 1, region.start_row - 1, region.end_col)
 
     local clean_range_key = vim.api.nvim_replace_termcodes("<C-u>", true, false, true)
-    vim.api.nvim_feedkeys(":" .. clean_range_key .. "Subs/" .. text[1] .. "/", 'i', false)
+    vim.api.nvim_feedkeys(":" .. clean_range_key .. "Subs/" .. text[1] .. "/", "i", false)
   end
-
 end
 
 function M.replace_word_under_cursor(command)
-  local current_word = vim.fn.expand('<cword>')
-  vim.api.nvim_feedkeys(":" .. command .. '/' .. current_word .. '/', "i", false)
+  local current_word = vim.fn.expand("<cword>")
+  vim.api.nvim_feedkeys(":" .. command .. "/" .. current_word .. "/", "i", false)
 end
 
 function M.replace_selection()
-  print('TODO: pending implementation')
+  print("TODO: pending implementation")
 end
 
 return M
